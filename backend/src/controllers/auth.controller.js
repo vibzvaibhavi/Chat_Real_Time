@@ -1,17 +1,21 @@
+import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 import { generateToken } from "../lib/utils.js";
 import User from "../models/User.js";
-import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs";
+import { ENV } from "../lib/env.js"; 
+
+
 export const signup = async (req,res) => {
     const {fullName, email, password} = req.body
 
 
     try{
         if(!fullName || !email ||!password){
-            return res.status(400).josn({message: "all fields req"})
+            return res.status(400).json({message: "all fields req"})
         }
 
         if(password.length < 6){
-            return res.status(400).josn({message: "pass must be atleast 6 chr"});
+            return res.status(400).json({message: "pass must be atleast 6 chr"});
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,6 +48,14 @@ export const signup = async (req,res) => {
             email:newUser.email,
             profilePic: newUser.profilePic,
         });
+        try{
+            await sendWelcomeEmail(savedUser.email, savedUser.fullName, ENV.CLIENT_URL);
+        } catch (error) {
+            console.error("Failed to send welcome email:", error);
+        }
+
+
+
       } else{
         res.status(400).json({message: "Invalid user data"})
       }
